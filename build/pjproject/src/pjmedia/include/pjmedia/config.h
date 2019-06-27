@@ -1,4 +1,4 @@
-/* $Id: config.h 5643 2017-08-22 04:59:57Z riza $ */
+/* $Id: config.h 6005 2019-05-26 13:18:02Z riza $ */
 /* 
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
@@ -72,6 +72,16 @@
  */
 #ifndef PJMEDIA_CONF_SWITCH_BOARD_BUF_SIZE
 #   define PJMEDIA_CONF_SWITCH_BOARD_BUF_SIZE    PJMEDIA_MAX_MTU
+#endif
+
+/**
+ * Specify whether the conference bridge uses AGC, an automatic adjustment to
+ * avoid dramatic change in the signal level which can cause noise.
+ *
+ * Default: 1 (enabled)
+ */
+#ifndef PJMEDIA_CONF_USE_AGC
+#   define PJMEDIA_CONF_USE_AGC    	    1
 #endif
 
 
@@ -348,8 +358,7 @@
  *    implementation to be used.
  *  - #PJMEDIA_RESAMPLE_LIBSAMPLERATE, to use libsamplerate implementation
  *    (a.k.a. Secret Rabbit Code).
- *  - #PJMEDIA_RESAMPLE_SPEEX, to use experimental sample rate conversion in
- *    Speex library.
+ *  - #PJMEDIA_RESAMPLE_SPEEX, to use sample rate conversion in Speex library.
  *  - #PJMEDIA_RESAMPLE_NONE, to disable sample rate conversion. Any calls to
  *    resample function will return error.
  *
@@ -402,10 +411,23 @@
 
 
 /**
- * DTMF/telephone-event duration, in timestamp.
+ * DTMF/telephone-event duration, in timestamp. To specify the duration in
+ * milliseconds, use the setting PJMEDIA_DTMF_DURATION_MSEC instead.
  */
 #ifndef PJMEDIA_DTMF_DURATION		
 #  define PJMEDIA_DTMF_DURATION			1600	/* in timestamp */
+#endif
+
+
+/**
+ * DTMF/telephone-event duration, in milliseconds. If the value is greater
+ * than zero, than this setting will be used instead of PJMEDIA_DTMF_DURATION.
+ *
+ * Note that for a clockrate of 8 KHz, a dtmf duration of 1600 timestamp
+ * units (the default value of PJMEDIA_DTMF_DURATION) is equivalent to 200 ms. 
+ */
+#ifndef PJMEDIA_DTMF_DURATION_MSEC		
+#  define PJMEDIA_DTMF_DURATION_MSEC		0
 #endif
 
 
@@ -540,6 +562,16 @@
  */
 #ifndef PJMEDIA_RTCP_RX_SDES_BUF_LEN
 #   define PJMEDIA_RTCP_RX_SDES_BUF_LEN		64
+#endif
+
+
+/**
+ * Specify the maximum number of RTCP Feedback capability definition.
+ * 
+ * Default: 16
+ */
+#ifndef PJMEDIA_RTCP_FB_MAX_CAP
+#   define PJMEDIA_RTCP_FB_MAX_CAP		16
 #endif
 
 
@@ -1097,6 +1129,16 @@
 #endif
 
 
+/* Setting to determine if media transport should switch RTP and RTCP
+ * remote address to the source address of the packets it receives.
+ *
+ * By default it is enabled.
+ */
+#ifndef PJMEDIA_TRANSPORT_SWITCH_REMOTE_ADDR
+#   define PJMEDIA_TRANSPORT_SWITCH_REMOTE_ADDR	    1
+#endif
+
+
 /**
  * Transport info (pjmedia_transport_info) contains a socket info and list
  * of transport specific info, since transports can be chained together 
@@ -1177,6 +1219,30 @@
  */
 #ifndef PJMEDIA_STREAM_KA_INTERVAL
 #   define PJMEDIA_STREAM_KA_INTERVAL		    5
+#endif
+
+
+/**
+ * Specify the number of identical consecutive error that will be ignored when 
+ * receiving RTP/RTCP data before the library tries to restart the transport.
+ *
+ * When receiving RTP/RTCP data, the library will ignore error besides 
+ * PJ_EPENDING or PJ_ECANCELLED and continue the loop to receive the data. 
+ * If the OS always return error, then the loop will continue non stop.
+ * This setting will limit the number of the identical consecutive error, 
+ * before the library start to restart the transport. If error still happens
+ * after transport restart, then PJMEDIA_EVENT_MEDIA_TP_ERR event will be 
+ * publish as a notification.
+ *
+ * If PJ_ESOCKETSTOP is raised, then transport will be restarted regardless
+ * of this setting.
+ * 
+ * To always ignore the error when receving RTP/RTCP, set this to 0.
+ *
+ * Default : 20
+ */
+#ifndef PJMEDIA_IGNORE_RECV_ERR_CNT
+#   define PJMEDIA_IGNORE_RECV_ERR_CNT		20
 #endif
 
 
@@ -1450,6 +1516,7 @@
 #   define PJMEDIA_HAS_DTMF_FLASH			1
 #endif
 
+
 /**
  * Specify the number of keyframe needed to be sent after the stream is 
  * created. Setting this to 0 will disable it.
@@ -1460,6 +1527,7 @@
 #   define PJMEDIA_VID_STREAM_START_KEYFRAME_CNT	5
 #endif
 
+
 /**
  * Specify the interval to send keyframe after the stream is created, in msec.
  *
@@ -1468,6 +1536,21 @@
 #ifndef PJMEDIA_VID_STREAM_START_KEYFRAME_INTERVAL_MSEC
 #   define PJMEDIA_VID_STREAM_START_KEYFRAME_INTERVAL_MSEC  1000
 #endif
+
+
+/**
+ * Specify minimum delay of video decoding, in milliseconds. Lower value may
+ * degrade video quality significantly in a bad network environment (e.g:
+ * with persistent late and out-of-order RTP packets). Note that the value
+ * must be lower than jitter buffer maximum delay (configurable via
+ * pjmedia_stream_info.jb_max or pjsua_media_config.jb_max).
+ *
+ * Default : 100
+ */
+#ifndef PJMEDIA_VID_STREAM_DECODE_MIN_DELAY_MSEC
+#   define PJMEDIA_VID_STREAM_DECODE_MIN_DELAY_MSEC	    100
+#endif
+
 
 
 /**
